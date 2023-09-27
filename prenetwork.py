@@ -8,8 +8,8 @@ import re
 class preNetwork:
     def __init__(self, species, reactions):
         n, k = len(species), len(reactions)
-        self.zeta_table = np.zeros((k, n))
-        self.rate_table = np.zeros((k, n))
+        self.zeta_table = np.zeros((k, n), dtype = np.int32)
+        self.rate_table = np.zeros((k, n), dtype = np.uint16)
         self.rates = np.zeros(k)
         self.species_dict = {item: index for index, item in enumerate(species)}
 
