@@ -7,7 +7,7 @@ def main(reactions, species, X, time_steps):
     zeta_table, rate_table, rates = pN.get_tables()
 
     network = rn.reactionNetwork(X, zeta_table, rate_table, rates, time_steps)
-    network.simulate()
+    network.simGillespie()
     network.graph()
 
 if __name__ == "__main__":
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     ]
     species = ['G','M','P', 'D']
     X = np.array([1, 0, 0, 0], dtype = np.int32)
-    time_steps = 10000
+    time_steps = 1000
 
     main(reactions, species, X, time_steps)
 
