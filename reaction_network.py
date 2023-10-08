@@ -11,8 +11,8 @@ from matplotlib import pyplot as plt
 class PreNetwork:
     def __init__(self, species, reactions):
         n, k = len(species), len(reactions)
-        self.zeta_table = np.zeros((k, n), dtype = np.int32)
-        self.kappa_table = np.zeros((k, n), dtype = np.int32)
+        self.zeta_table = np.zeros((k, n), dtype = np.int64)
+        self.kappa_table = np.zeros((k, n), dtype = np.int64)
         self.kappas = np.zeros(k)
         self.species_dict = {item: index for index, item in enumerate(species)}
 
@@ -80,7 +80,7 @@ class ReactionNetwork:
             rate = np.sum(kinetic_rates)
 
             # calculate delay and time variable
-            delay = np.random.exponential(1.0/rate)
+            delay = np.random.exponential(rate)
             self.time += delay
 
             # pick reaction and add to X
@@ -102,7 +102,7 @@ class ReactionNetwork:
                 break
 
             # find delta := min delta_k
-            P_ks = np.log(1/np.random.rand(self.k))         
+            P_ks = -np.log(np.random.rand(self.k))         
             delta = np.nanmin((P_ks - T_ks)/kinetic_rates)
             mu = np.nanargmin((P_ks - T_ks)/kinetic_rates)
 
@@ -127,13 +127,15 @@ class ReactionNetwork:
         return kinetics
     
     def split_X(self):
-        X_1 = np.zeros(self.n)
-        X_2 = np.zeros(self.n)
-        for i in range(self.k):
+        X_other = np.zeros(self.n)
+        for i in range(self.n):
             temp = np.random.randint(0, self.X[i]+1)
-            X_1[i] = temp
-            X_2[i] = self.X[i] - temp
-        return X_1, X_2
+            self.X[i] = temp
+            X_other[i] = self.X[i] - temp
+        return X_other
+    
+    def merge_X(self, new_X):
+        self.X += new_X
 
     def graph(self):
         for i in range(self.n):
@@ -162,8 +164,6 @@ class SingleReactionNetwork:
         self.population_table[0] = self.X
 
         for i in range(1, self.time_steps):
-            
-
             # record population at this time
             self.population_table[i] = self.X
             
@@ -176,12 +176,11 @@ class SingleReactionNetwork:
             rate = np.sum(kinetic_rates)
 
             # calculate delay and time variable
-            delay = np.random.exponential(1.0/rate)
+            delay = np.random.exponential(rate)
             self.times[i] = self.times[i-1] + delay
 
             # pick reaction and add to X
             which_reaction = np.random.choice(np.arange(self.k), p=kinetic_rates/rate)
-            print(which_reaction)
             self.X += self.zeta_table[which_reaction, :]
     
     def simNextReaction(self):
@@ -191,6 +190,7 @@ class SingleReactionNetwork:
         # initial population
         self.population_table[0] = self.X
         T_ks = np.zeros(self.k)
+        P_ks = -np.log(np.random.rand(self.k))  # = log(rand())
         for i in range(1, self.time_steps):
             
             # record population at this time
@@ -203,15 +203,12 @@ class SingleReactionNetwork:
                 break
 
             # find delta := min delta_k
-            P_ks = -np.log(np.random.rand(self.k))  # = log(rand())
-
             # want infinity if kinetic_rate[i] is zero
             np.seterr(all='ignore')
             delta_tks = (P_ks - T_ks)/kinetic_rates
             np.seterr(all='warn')
 
             mu = np.nanargmin(delta_tks)
-            print(delta_tks, '  ', mu)
             delta = delta_tks[mu]
 
             # increment time, X
@@ -228,54 +225,15 @@ class SingleReactionNetwork:
         for i in range(self.k):
             # up to n species may be involved in the reaction
             for j in range(self.n):
-                # if the species is relevant (a.k.a. self.kappa_table[i, j] != 0) then the rate is multiplied accordingl
-                # y
-                # otherwise rate is multiplied by one
+                # if the species is relevant (self.kappa_table[i, j] != 0) then the rate is multiplied accordingly 
                 kinetics[i] *= scipy.special.comb(self.X[j], self.kappa_table[i, j]) * (self.kappa_table[i, j] != 0) \
-                    + (self.kappa_table[i, j] == 0)
+                    + (self.kappa_table[i, j] == 0) # otherwise rate is unchaged (multiply by 1)
         return kinetics
-    
-    def split_X(self):
-        X_1 = np.zeros(self.n)
-        X_2 = np.zeros(self.n)
-        for i in range(self.k):
-            temp = np.random.randint(0, self.X[i]+1)
-            X_1[i] = temp
-            X_2[i] = self.X[i] - temp
-        return X_1, X_2
 
     def graph(self):
         for i in range(self.n):
             plt.plot(self.times, self.population_table[:, i])
         plt.show()
-
-class CompartmentManager:
-    def __init__(self):
-        self.d = {}
-        self.l = []
-    
-    def add(self, element):
-        # enforce unique items
-        # if self.d[element]:
-        #     return
-        self.l.append(element)
-        self.d[element] = len(self.l)-1
-
-    def remove(self, element):
-        i = self.d[element]
-        del self.d[element]
-        if i != len(self.l):
-            self.l[i] = self.l.pop()
-            self.d[self.l[i]] = i
-        return element
-
-    def sample(self):
-        return np.random.choice(self.l, p = self.generate_distribution)
-        
-
-    # normalize before returning
-    def generate_distribution(self):
-        pass
 
 # # Example usage:
 # reactions = [

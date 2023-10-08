@@ -14,7 +14,7 @@ def main(reactions, species, X, time_steps):
     network.simNextReaction()
     print()
     network.simGillespie()
-    #network.graph()
+    network.graph()
 
 if __name__ == "__main__":
     reactions = [
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     # ]
     species = ['G','M','P', 'D']
     X = np.array([1, 0, 0, 0], dtype = np.int32)
-    time_steps = 10
+    time_steps = 5000
 
     main(reactions, species, X, time_steps)
 
