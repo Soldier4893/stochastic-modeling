@@ -8,17 +8,17 @@ from matplotlib import pyplot as plt
 # species is list, reaction is list of tuples as (reactants, products, rate) as string, string, float.
 # kappa_table is n x k, kappa_table[i][j] tells how much of species j is needed for reaction i
 # zeta_table is n x k, when reaction i occurs we should set X += zeta_table[i]
-class preNetwork:
+class PreNetwork:
     def __init__(self, species, reactions):
         n, k = len(species), len(reactions)
         self.zeta_table = np.zeros((k, n), dtype = np.int32)
         self.kappa_table = np.zeros((k, n), dtype = np.int32)
-        self.rates = np.zeros(k)
+        self.kappas = np.zeros(k)
         self.species_dict = {item: index for index, item in enumerate(species)}
 
         for reaction_num in range(k):
             reactants, products, rate = reactions[reaction_num]
-            self.rates[reaction_num] = rate
+            self.kappas[reaction_num] = rate
             
             # find reactants, add to zeta
             self.addSideToZeta(reactants, reaction_num, sign = -1)
@@ -51,30 +51,124 @@ class preNetwork:
         return species_index, amount
     
     def get_tables(self):
-        return self.zeta_table, self.kappa_table, self.rates
+        return self.zeta_table, self.kappa_table, self.kappas
 
-class reactionNetwork:
-    def __init__(self, X, zeta_table, kappa_table, rates, time_steps):
+class ReactionNetwork:
+    def __init__(self, X, zeta_table, kappa_table, kappas):
         self.X = X
-        self.k = len(rates)
+        self.k = len(kappas)
         self.n = len(kappa_table[0])
         self.zeta_table = zeta_table
         self.kappa_table = kappa_table
-        self.rates = rates
+        self.kappas = kappas
+        self.timer = 0
+
+    def simGillespie(self, time_limit):
+        '''
+        run gillespie simulation. Each time step record population. Between time steps select a reaction according
+        to its kappa relevant species concentration and add the corresponding reaction vector to the population
+        '''
+        # currently does not record population time
+        while self.time <= time_limit:
+            
+            # calculate kinetic rates
+            kinetic_rates = self.calculate_kinetics() * self.kappas
+            if not kinetic_rates.any():
+                print("no more reactions")
+                break
+
+            rate = np.sum(kinetic_rates)
+
+            # calculate delay and time variable
+            delay = np.random.exponential(1.0/rate)
+            self.time += delay
+
+            # pick reaction and add to X
+            which_reaction = np.random.choice(np.arange(self.k), p=kinetic_rates/rate)
+            self.X += self.zeta_table[which_reaction, :]
+    
+    def simNextReaction(self):
+        '''
+        run sim next reaction
+        '''
+        # initial population
+        T_ks = np.zeros(self.k)
+        for i in range(1, self.time_steps):
+            
+            # calculate kinetic rates
+            kinetic_rates = self.calculate_kinetics() * self.kappas
+            if not kinetic_rates.any():
+                print("no more reactions")
+                break
+
+            # find delta := min delta_k
+            P_ks = np.log(1/np.random.rand(self.k))         
+            delta = np.nanmin((P_ks - T_ks)/kinetic_rates)
+            mu = np.nanargmin((P_ks - T_ks)/kinetic_rates)
+
+            # X
+            self.X += self.zeta_table[mu]
+            T_ks += kinetic_rates * delta
+            P_ks[mu] += np.log(1/np.random.rand())
+
+    def calculate_kinetics(self):
+        '''
+        return k-vector of kinetic rates
+        '''
+        kinetics = np.ones(self.k)
+        for i in range(self.k):
+            # up to n species may be involved in the reaction
+            for j in range(self.n):
+                # if the species is relevant (a.k.a. self.kappa_table[i, j] != 0) then the rate is multiplied accordingl
+                # y
+                # otherwise rate is multiplied by one
+                kinetics[i] *= scipy.special.comb(self.X[j], self.kappa_table[i, j]) * (self.kappa_table[i, j] != 0) \
+                    + (self.kappa_table[i, j] == 0)
+        return kinetics
+    
+    def split_X(self):
+        X_1 = np.zeros(self.n)
+        X_2 = np.zeros(self.n)
+        for i in range(self.k):
+            temp = np.random.randint(0, self.X[i]+1)
+            X_1[i] = temp
+            X_2[i] = self.X[i] - temp
+        return X_1, X_2
+
+    def graph(self):
+        for i in range(self.n):
+            plt.plot(self.times, self.population_table[:, i])
+        plt.show()
+
+
+class SingleReactionNetwork:
+    def __init__(self, X, zeta_table, kappa_table, kappas, time_steps):
+        self.X = X
+        self.k = len(kappas)
+        self.n = len(kappa_table[0])
+        self.zeta_table = zeta_table
+        self.kappa_table = kappa_table
+        self.kappas = kappas
         self.time_steps = time_steps
         self.population_table = np.zeros((time_steps, self.n))
         self.times = np.zeros(time_steps)
 
     def simGillespie(self):
+        '''
+        run gillespie simulation. Each time step record population. Between time steps select a reaction according
+        to its kappa relevant species concentration and add the corresponding reaction vector to the population
+        '''
         # initial population
         self.population_table[0] = self.X
 
         for i in range(1, self.time_steps):
+            
+
             # record population at this time
             self.population_table[i] = self.X
             
             # calculate kinetic rates
-            kinetic_rates = self.calculate_kinetics() * self.rates
+            kinetic_rates = self.calculate_kinetics() * self.kappas
             if not kinetic_rates.any():
                 print("no more reactions")
                 break
@@ -87,51 +181,101 @@ class reactionNetwork:
 
             # pick reaction and add to X
             which_reaction = np.random.choice(np.arange(self.k), p=kinetic_rates/rate)
+            print(which_reaction)
             self.X += self.zeta_table[which_reaction, :]
     
     def simNextReaction(self):
+        '''
+        run sim next reaction
+        '''
         # initial population
         self.population_table[0] = self.X
         T_ks = np.zeros(self.k)
         for i in range(1, self.time_steps):
+            
             # record population at this time
             self.population_table[i] = self.X
             
             # calculate kinetic rates
-            kinetic_rates = self.calculate_kinetics() * self.rates
+            kinetic_rates = self.calculate_kinetics() * self.kappas
             if not kinetic_rates.any():
                 print("no more reactions")
                 break
 
             # find delta := min delta_k
-            P_ks = np.log(1/np.random.rand(self.k))         
-            delta = np.nanmin((P_ks - T_ks)/kinetic_rates)
-            
+            P_ks = -np.log(np.random.rand(self.k))  # = log(rand())
+
+            # want infinity if kinetic_rate[i] is zero
+            np.seterr(all='ignore')
+            delta_tks = (P_ks - T_ks)/kinetic_rates
+            np.seterr(all='warn')
+
+            mu = np.nanargmin(delta_tks)
+            print(delta_tks, '  ', mu)
+            delta = delta_tks[mu]
+
             # increment time, X
             self.times[i] = self.times[i-1] + delta
-            self.X += self.zeta_table[9] # not 9, should be mu. Not sure what mu is.
+            self.X += self.zeta_table[mu]
             T_ks += kinetic_rates * delta
-            P_ks[9] += np.log(1/np.random.rand())
-            
+            P_ks[mu] -= np.log(np.random.rand())  # += log(rand())
+
     def calculate_kinetics(self):
+        '''
+        return k-vector of kinetic rates
+        '''
         kinetics = np.ones(self.k)
         for i in range(self.k):
             # up to n species may be involved in the reaction
             for j in range(self.n):
-                # if the species is relevant (a.k.a. self.kappa_table[i, j] != 0) then the rate is multiplied accordingly
+                # if the species is relevant (a.k.a. self.kappa_table[i, j] != 0) then the rate is multiplied accordingl
+                # y
                 # otherwise rate is multiplied by one
-                kinetics[i] *= scipy.special.comb(self.X[j], self.kappa_table[i, j]) * (self.kappa_table[i, j] != 0) + (self.kappa_table[i, j] == 0)
+                kinetics[i] *= scipy.special.comb(self.X[j], self.kappa_table[i, j]) * (self.kappa_table[i, j] != 0) \
+                    + (self.kappa_table[i, j] == 0)
         return kinetics
     
+    def split_X(self):
+        X_1 = np.zeros(self.n)
+        X_2 = np.zeros(self.n)
+        for i in range(self.k):
+            temp = np.random.randint(0, self.X[i]+1)
+            X_1[i] = temp
+            X_2[i] = self.X[i] - temp
+        return X_1, X_2
+
     def graph(self):
         for i in range(self.n):
             plt.plot(self.times, self.population_table[:, i])
         plt.show()
 
-class nextReactionSim:
-    def __init__(self, X, zeta_table, kappa_table, rates, time_steps):
-        pass
+class CompartmentManager:
+    def __init__(self):
+        self.d = {}
+        self.l = []
+    
+    def add(self, element):
+        # enforce unique items
+        # if self.d[element]:
+        #     return
+        self.l.append(element)
+        self.d[element] = len(self.l)-1
 
+    def remove(self, element):
+        i = self.d[element]
+        del self.d[element]
+        if i != len(self.l):
+            self.l[i] = self.l.pop()
+            self.d[self.l[i]] = i
+        return element
+
+    def sample(self):
+        return np.random.choice(self.l, p = self.generate_distribution)
+        
+
+    # normalize before returning
+    def generate_distribution(self):
+        pass
 
 # # Example usage:
 # reactions = [
