@@ -69,7 +69,7 @@ class ReactionNetwork:
         to its kappa relevant species concentration and add the corresponding reaction vector to the population
         '''
         # currently does not record population time
-        while self.time <= time_limit:
+        while self.timer <= time_limit:
             
             # calculate kinetic rates
             kinetic_rates = self.calculate_kinetics() * self.kappas
@@ -81,7 +81,7 @@ class ReactionNetwork:
 
             # calculate delay and time variable
             delay = np.random.exponential(rate)
-            self.time += delay
+            self.timer += delay
 
             # pick reaction and add to X
             which_reaction = np.random.choice(np.arange(self.k), p=kinetic_rates/rate)
@@ -127,11 +127,11 @@ class ReactionNetwork:
         return kinetics
     
     def split_X(self):
-        X_other = np.zeros(self.n)
+        X_other = np.zeros(self.n, dtype=np.int64)
         for i in range(self.n):
-            temp = np.random.randint(0, self.X[i]+1)
-            self.X[i] = temp
-            X_other[i] = self.X[i] - temp
+            temp = np.random.randint(0, self.X[i]+1, dtype=np.int64)
+            X_other[i] = temp
+            self.X[i] -= temp
         return X_other
     
     def merge_X(self, new_X):
@@ -246,7 +246,7 @@ class SingleReactionNetwork:
 # ]
 
 # species = ['G','M','P', 'D']
-# X = np.array([1, 0, 0, 0], dtype = np.int32)
+# X = np.array([1, 0, 0, 0], dtype = np.int64)
 # assert len(species) == len(X), "species set not aligned with initial population"
 # time_steps = 5000
 # pN = preNetwork(species, reactions)

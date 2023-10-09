@@ -11,7 +11,7 @@ def main(reactions, species, X, time_steps):
     zeta_table, rate_table, kappas = pN.get_tables()
 
     network = SingleReactionNetwork(X, zeta_table, rate_table, kappas, time_steps)
-    network.simNextReaction()
+    # network.simNextReaction()
     print()
     network.simGillespie()
     network.graph()

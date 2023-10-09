@@ -13,16 +13,16 @@ class CompartmentManager:
         self.ckappas = ckappas
         self.ctimes = np.zeros(ctime_steps)
         self.ctime_steps = ctime_steps
-        self.cpopulation = np.zeros(ctime_steps, dtype = np.int32)
+        self.cpopulation = np.zeros(ctime_steps, dtype = np.int64)
     
     def simCompartments(self):
         zeta_table, kappa_table, kappas = self.pN.get_tables()
         
 
         # initial amount of compartments
-        for _ in range(7):
+        for _ in range(3):
             self.add(ReactionNetwork(self.mu_X(), zeta_table, kappa_table, kappas))
-        self.cpopulation[0] = 7
+        self.cpopulation[0] = 3
 
         for i in range(1, self.ctime_steps):
             nc = len(self.compartments)
@@ -45,9 +45,8 @@ class CompartmentManager:
             elif which_action == 2: # split compartment
                 cpmt_to_split = self.sample()
                 self.add(ReactionNetwork(cpmt_to_split.split_X(), zeta_table, kappa_table, kappas))
-            else: # merge compartments
+            else: #which_action == 3  # merge compartments
                 cpmt_giver = self.pop()
-                print("aa", cpmt_giver.X.dtype)
                 cpmt_receiver = self.sample()
                 cpmt_receiver.merge_X(cpmt_giver.X)
 
@@ -67,7 +66,9 @@ class CompartmentManager:
     def remove_and_return(self, element):   
         i = self.d[element]
         del self.d[element]
-        if i != len(self.compartments)-1:
+        if i == len(self.compartments)-1:
+            self.compartments.pop()
+        else:
             self.compartments[i] = self.compartments.pop()
             self.d[self.compartments[i]] = i
         return element
