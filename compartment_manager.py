@@ -5,7 +5,7 @@ import numpy as np
 np.random.seed(18)
 
 class CompartmentManager:
-    def __init__(self, pN, mu_X, ctime_steps, ckappas):
+    def __init__(self, n, pN, mu_X, ctime_steps, ckappas):
         self.d = {}
         self.compartments = []
         self.pN = pN
@@ -14,10 +14,11 @@ class CompartmentManager:
         self.ctimes = np.zeros(ctime_steps)
         self.ctime_steps = ctime_steps
         self.cpopulation = np.zeros(ctime_steps, dtype = np.int64)
+        self.n = n
     
     def simCompartments(self):
         zeta_table, kappa_table, kappas = self.pN.get_tables()
-        
+        self.populations = np.zeros((self.ctime_steps, len(kappa_table[0])))
 
         # initial amount of compartments
         for _ in range(3):
@@ -50,10 +51,15 @@ class CompartmentManager:
                 cpmt_receiver = self.sample()
                 cpmt_receiver.merge_X(cpmt_giver.X)
 
-            # for compartment in self.compartments, simulate(delay)
+            for compartment in self.compartments:
+                compartment.simGillespie(delay)
+                self.populations[i] += compartment.X
 
     def graph(self):
+        for i in range(self.n):
+            plt.plot(self.ctimes, self.populations[:, i])
         plt.plot(self.ctimes, self.cpopulation)
+        plt.legend(['G','M','P','D','C']) # change later
         plt.show()
 
     def add(self, element):

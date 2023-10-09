@@ -12,7 +12,7 @@ reactions = [
 ]
 species = ['G','M','P', 'D']
 X = np.array([1, 0, 0, 0], dtype = np.int64)
-ctime_steps = 1000
+ctime_steps = 400
 
 def sample_pmf_X():
     # temporary distribution
@@ -20,10 +20,10 @@ def sample_pmf_X():
 
 if __name__ == "__main__":
     PN = PreNetwork(species, reactions)
-    ckappas = np.array([0.2, 0.6, 0.4, 0.8]) #in order is I, E, F, C
+    ckappas = np.array([0.02, 0.3, 0.04, 0.01]) #in order is I, E, F, C
     assert len(species) == len(X), "species set not aligned with initial population"
     
-    cm = CompartmentManager(PN, sample_pmf_X, ctime_steps, ckappas)
+    cm = CompartmentManager(len(species), PN, sample_pmf_X, ctime_steps, ckappas)
     cm.simCompartments()
     cm.graph()
 
