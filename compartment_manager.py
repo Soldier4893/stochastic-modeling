@@ -2,7 +2,7 @@ from reaction_network import PreNetwork, ReactionNetwork
 from matplotlib import pyplot as plt
 import numpy as np
 
-np.random.seed(18)
+# np.random.seed(18)
 
 class CompartmentManager:
     def __init__(self, n, pN, mu_X, ctime_steps, ckappas):
@@ -112,9 +112,8 @@ class SimpleFastCompartmentManager:
         self.numcomparts = np.int32(3)
 
         while timer < time_limit:
-            print(self.comparts[:self.numcomparts])
             ckinetic_rates = np.array(
-                (self.kI, self.numcomparts*self.kE, self.numcomparts*self.kF,
+                (self.kI, self.numcomparts*self.kE, self.numcomparts*self.kF, #*np.sum(self.comparts[0:self.numcomparts-1]),
                 self.numcomparts*(self.numcomparts-1)/2 * self.kC, self.numcomparts*self.kB,
                 self.kD*np.sum(self.comparts[:self.numcomparts+1])) #sum(comparts[:numcomparts+1]) is total number of S chemicals
             )
@@ -122,25 +121,28 @@ class SimpleFastCompartmentManager:
             which_action = np.random.choice(np.arange(6), p=ckinetic_rates/rate)
             delay = np.random.exponential(1/rate)
             timer += delay
-            
+            # print(self.comparts[:self.numcomparts])
+
             if which_action == 0: # add compartment
                 self.add_compart(np.int32(np.random.randint(0, 11)))
             elif which_action == 1: # remove compartment
                 self.remove_compart(self.random_sample_index())
             elif which_action == 2: # split compartment
                 which_compart = self.random_sample_index() # maybe different name
-                amount = np.int32(np.random.randint(0, self.comparts[which_compart]))
+                amount = 0
+                if self.comparts[which_compart] != 0:
+                    amount = np.int32(np.random.randint(0, self.comparts[which_compart]))
                 self.comparts[which_compart] -= amount
                 self.add_compart(amount)                
             elif which_action == 3: # merge compartments
                 giver = self.random_sample_index() # maybe different name
-                amount = np.int32(np.random.randint(0, self.comparts[which_compart]))
+                amount = self.comparts[giver]
                 self.remove_compart(giver)
                 receiver = self.random_sample_index()
                 self.comparts[receiver] += amount
             elif which_action == 4: # increment one compartment's chemicals
                 kinetic_rates = self.comparts[:self.numcomparts]
-                which_compart = np.random.choice(np.arange(self.numcomparts), p = kinetic_rates/np.sum(kinetic_rates))
+                which_compart = np.random.choice(np.arange(self.numcomparts))
                 self.comparts[which_compart] += 1
             else: # decrement one compartment's chemicals
                 kinetic_rates = self.comparts[:self.numcomparts]
