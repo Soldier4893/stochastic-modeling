@@ -11,8 +11,8 @@ from matplotlib import pyplot as plt
 class PreNetwork:
     def __init__(self, species, reactions):
         n, k = len(species), len(reactions)
-        self.zeta_table = np.zeros((k, n), dtype = np.int64)
-        self.kappa_table = np.zeros((k, n), dtype = np.int64)
+        self.zeta_table = np.zeros((k, n), dtype = np.int32)
+        self.kappa_table = np.zeros((k, n), dtype = np.int32)
         self.kappas = np.zeros(k)
         self.species_dict = {item: index for index, item in enumerate(species)}
 
@@ -68,9 +68,8 @@ class ReactionNetwork:
         run gillespie simulation. Each time step record population. Between time steps select a reaction according
         to its kappa relevant species concentration and add the corresponding reaction vector to the population
         '''
-        # currently does not record population time
-        while self.timer <= time_limit:
-            
+        # currently does not record population time  
+        while True:    
             # calculate kinetic rates
             kinetic_rates = self.calculate_kinetics() * self.kappas
             if not kinetic_rates.any():
@@ -80,12 +79,15 @@ class ReactionNetwork:
             rate = np.sum(kinetic_rates)
 
             # calculate delay and time variable
-            delay = np.random.exponential(rate)
+            delay = np.random.exponential(1/rate)
             self.timer += delay
+            if self.timer >= time_limit:
+                break
 
             # pick reaction and add to X
             which_reaction = np.random.choice(np.arange(self.k), p=kinetic_rates/rate)
             self.X += self.zeta_table[which_reaction, :]
+        return self.X
     
     def simNextReaction(self):
         '''
@@ -94,7 +96,6 @@ class ReactionNetwork:
         # initial population
         T_ks = np.zeros(self.k)
         for i in range(1, self.time_steps):
-            
             # calculate kinetic rates
             kinetic_rates = self.calculate_kinetics() * self.kappas
             if not kinetic_rates.any():
@@ -127,9 +128,9 @@ class ReactionNetwork:
         return kinetics
     
     def split_X(self):
-        X_other = np.zeros(self.n, dtype=np.int64)
+        X_other = np.zeros(self.n, dtype=np.int32)
         for i in range(self.n):
-            temp = np.random.randint(0, self.X[i]+1, dtype=np.int64)
+            temp = np.random.randint(0, self.X[i]+1, dtype=np.int32)
             X_other[i] = temp
             self.X[i] -= temp
         return X_other
@@ -246,7 +247,7 @@ class SingleReactionNetwork:
 # ]
 
 # species = ['G','M','P', 'D']
-# X = np.array([1, 0, 0, 0], dtype = np.int64)
+# X = np.array([1, 0, 0, 0], dtype = np.int32)
 # assert len(species) == len(X), "species set not aligned with initial population"
 # time_steps = 5000
 # pN = preNetwork(species, reactions)

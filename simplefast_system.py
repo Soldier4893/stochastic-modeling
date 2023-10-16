@@ -4,19 +4,37 @@ import numpy as np
 import time
 
 def create_simulation(t):
-    sfcm = SimpleFastCompartmentManager((2, 0.1, 1.3, 0.1), 3, 0.2)
+    sfcm = SimpleFastCompartmentManager((1.4, 0.3, 0.6, 0.1), 3, 0.2)
     x = sfcm.simComparts(t)
+    print(x)
+
+def test(threads, duration, many):
+    s = time.time()
+    with Pool(threads) as p:
+        p.map(create_simulation, [duration for i in range(many)])
+    print(threads,': ', duration,' for ',many,' ',time.time()-s)
+
+long = 120
+short = 30
+many = 150
+few = 40
+threads = 8
+threads2 = 4
 
 if __name__ == "__main__":
-    s = time.time()
-    with Pool(16) as p:
-        p.map(create_simulation, [100 for i in range(256)])
-    e = time.time()
-    print(e-s)
-
-    s = time.time()
-    create_simulation(100)
-    e = time.time()
-    print(e-s)
-
+    create_simulation(0.2)
+    print('done')
+    # test(threads, short, many)
+    # test(threads2, short, many)
+    # test(threads, long ,many)
+    # test(threads2, long ,many)
+    # print()
+    # test(threads, long ,few)
+    # test(threads2, long ,few)
+    # print()
+    # test(threads, short ,many)
+    # test(threads2, short ,few)
+    # print()
+    # test(threads2, short ,many)
+    # test(threads, short ,few)
 

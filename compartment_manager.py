@@ -13,7 +13,7 @@ class CompartmentManager:
         self.ckappas = ckappas
         self.ctimes = np.zeros(ctime_steps)
         self.ctime_steps = ctime_steps
-        self.cpopulation = np.zeros(ctime_steps, dtype = np.int64)
+        self.cpopulation = np.zeros(ctime_steps, dtype = np.int32)
         self.n = n
     
     def simCompartments(self):
@@ -93,7 +93,7 @@ class CompartmentManager:
 
 class SimpleFastCompartmentManager:
     def __init__(self, ckappas, kB, kD):
-        self.comparts = np.zeros(5000) #max 5000 compartments, change as needed
+        self.comparts = np.zeros(20000, dtype = np.int32) #max 5000 compartments, change as needed
         self.kB = np.float64(kB)
         self.kD = np.float64(kD)
         self.kI = np.float64(ckappas[0])
@@ -106,14 +106,14 @@ class SimpleFastCompartmentManager:
         timer = np.float64(0)
         time_limit = np.float64(limit)
         # initial amount of compartments
-        self.comparts[0] = np.random.randint(0, 11)
-        self.comparts[1] = np.random.randint(0, 11)
-        self.comparts[2] = np.random.randint(0, 11)
+        self.comparts[0] = np.int32(np.random.randint(0, 11))
+        self.comparts[1] = np.int32(np.random.randint(0, 11))
+        self.comparts[2] = np.int32(np.random.randint(0, 11))
         self.numcomparts = np.int32(3)
 
         while timer < time_limit:
             ckinetic_rates = np.array(
-                (self.kI, self.numcomparts*self.kE, self.numcomparts*self.kF, #*np.sum(self.comparts[0:self.numcomparts-1]),
+                (self.kI, self.numcomparts*self.kE, self.numcomparts*self.kF*np.sum(self.comparts[0:self.numcomparts]),
                 self.numcomparts*(self.numcomparts-1)/2 * self.kC, self.numcomparts*self.kB,
                 self.kD*np.sum(self.comparts[:self.numcomparts+1])) #sum(comparts[:numcomparts+1]) is total number of S chemicals
             )
@@ -128,7 +128,8 @@ class SimpleFastCompartmentManager:
             elif which_action == 1: # remove compartment
                 self.remove_compart(self.random_sample_index())
             elif which_action == 2: # split compartment
-                which_compart = self.random_sample_index() # maybe different name
+                which_compart = np.random.choice(np.arange(self.numcomparts), p = self.comparts[:self.numcomparts]/np.sum(self.comparts[0:self.numcomparts]))
+                #which_compart = self.random_sample_index() # maybe different name
                 amount = 0
                 if self.comparts[which_compart] != 0:
                     amount = np.int32(np.random.randint(0, self.comparts[which_compart]))
