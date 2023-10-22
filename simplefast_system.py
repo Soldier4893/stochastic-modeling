@@ -1,5 +1,6 @@
 from compartment_manager import SimpleFastCompartmentManager, SimpleFastCompartmentManager2, SimpleFastCompartmentManager1
 from multiprocessing import Pool
+from matplotlib import pyplot as plt
 import numpy as np
 import time
 import cProfile
@@ -47,25 +48,35 @@ if __name__ == "__main__":
     timer2 = 0
 
     count = 1000
-    for _ in range(count):
-        sfcm2 = SimpleFastCompartmentManager2((1, 1, 2, 0), 1, 1)
-        sfcm = SimpleFastCompartmentManager((1, 1, 2, 0), 1, 1)
-        sfcm1 = SimpleFastCompartmentManager1((1, 1, 2, 0), 1, 1)
+    sfcm2 = SimpleFastCompartmentManager2((1, 1, 2.01, 0), 1, 1)
+    sfcm2.simComparts(100)
+    sfcm2.graph()
 
-        s = time.time()
-        sum += create_simulation()
-        timer +=time.time()-s
+    sfcm1 = SimpleFastCompartmentManager1((1, 1, 2.01, 0), 1, 1)
+    sfcm1.simComparts(100)
+    sfcm1.graph()
 
-        s = time.time()
-        sum1 += create_simulation1()
-        timer1 +=time.time()-s
+    plt.legend(['1 numS','1 numC', '2 numS','2 numC'])
+    plt.show()
+    # for _ in range(count):
+    #     sfcm2 = SimpleFastCompartmentManager2((1, 1, 2, 0), 1, 1)
+    #     sfcm = SimpleFastCompartmentManager((1, 1, 2, 0), 1, 1)
+    #     sfcm1 = SimpleFastCompartmentManager1((1, 1, 2, 0), 1, 1)
+
+    #     s = time.time()
+    #     sum += create_simulation()
+    #     timer +=time.time()-s
+
+    #     s = time.time()
+    #     sum1 += create_simulation1()
+    #     timer1 +=time.time()-s
         
-        s = time.time()
-        sum2+=create_simulation2()
-        timer2 +=time.time()-s
+    #     s = time.time()
+    #     sum2+=create_simulation2()
+    #     timer2 +=time.time()-s
 
-    print(timer/count, timer1/count, timer2/count)
-    print(sum, sum1, sum2)
+    # print(timer/count, timer1/count, timer2/count)
+    # print(sum, sum1, sum2)
 
 
 

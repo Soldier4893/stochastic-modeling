@@ -187,7 +187,7 @@ class SimpleFastCompartmentManager1:
         timer = np.float64(0)
         time_limit = np.float64(limit)
 
-        self.population = np.zeros((10000, 3))
+        self.population = np.zeros((80000, 3))
         self.numComparts = np.int32(3)
         self.numReactions = np.int32(0)
         while True:
@@ -256,7 +256,7 @@ class SimpleFastCompartmentManager1:
         plt.plot(t, s)
         plt.plot(t, c)
         plt.legend(['numS','numC'])
-        plt.show()
+        # plt.show()
 
 class SimpleFastCompartmentManager2:
     def __init__(self, ckappas, kB, kD):
@@ -278,9 +278,14 @@ class SimpleFastCompartmentManager2:
     def simComparts(self, limit):
         timer = np.float64(0)
         time_limit = np.float64(limit)
+        self.population = np.zeros((80000, 3))
         # initial amount of compartments
-        o=0
+        self.numReactions = np.int32(0)
         while True:
+            self.population[self.numReactions,0] = timer
+            self.population[self.numReactions,1] = self.numS
+            self.population[self.numReactions,2] = self.numComparts+self.numzeros
+
             ckinetic_rates = np.array(
                 (self.kI, (self.numComparts+self.numzeros)*self.kE, self.kF*self.numS,
                 (self.numComparts+self.numzeros)*self.kB, self.kD*self.numS)
@@ -329,9 +334,9 @@ class SimpleFastCompartmentManager2:
                 self.numS -= 1
                 if self.comparts[which_compart] == 0:
                     self.remove_compart(which_compart)
-            o += 1
+            self.numReactions += 1
         # print("here", self.comparts[:self.numComparts], self.numS)
-        return self.comparts[:self.numComparts], self.numzeros, o
+        return self.comparts[:self.numComparts], self.numzeros
     
     def add_compart(self, amount):
         # add fake compartment
@@ -360,8 +365,10 @@ class SimpleFastCompartmentManager2:
         self.numComparts -= 1
 
     def graph(self):
-        for i in range(self.n):
-            plt.plot(self.ctimes, self.populations[:, i])
-        plt.plot(self.ctimes, self.cpopulation)
-        plt.legend(['G','M','P','D','C']) # change later
-        plt.show()
+        t = self.population[:self.numReactions, 0]
+        s = self.population[:self.numReactions, 1]
+        c = self.population[:self.numReactions, 2]
+        plt.plot(t, s)
+        plt.plot(t, c)
+        plt.legend(['numS','numC'])
+        # plt.show()
