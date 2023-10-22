@@ -59,7 +59,7 @@ class CompartmentManager:
         for i in range(self.n):
             plt.plot(self.ctimes, self.populations[:, i])
         plt.plot(self.ctimes, self.cpopulation)
-        plt.legend(['G','M','P','D','C']) # change later
+        plt.legend(['S', 'B', 'C']) # change later
         plt.show()
 
     def add(self, element):
@@ -103,7 +103,7 @@ class SimpleFastCompartmentManager:
         self.comparts[0] = 5
         self.comparts[1] = 3
         self.comparts[2] = 2
-        self.numcomparts = np.int32(3)
+        self.numComparts = np.int32(3)
         self.numS = np.int32(10)
         self.numzeros = np.int32(0)
     
@@ -111,24 +111,26 @@ class SimpleFastCompartmentManager:
         timer = np.float64(0)
         time_limit = np.float64(limit)
         # initial amount of compartments
-        self.numcomparts = np.int32(3)
+        self.numComparts = np.int32(3)
 
-        while timer < time_limit:
+        while True:
             ckinetic_rates = np.array(
-                (self.kI, self.numcomparts*self.kE, self.kF*np.sum(self.comparts[0:self.numcomparts]),
-                self.numcomparts*self.kB, self.kD*np.sum(self.comparts[:self.numcomparts])) #sum(comparts[:numcomparts+1]) is total number of S chemicals
+                (self.kI, self.numComparts*self.kE, self.kF*np.sum(self.comparts[0:self.numComparts]),
+                self.numComparts*self.kB, self.kD*np.sum(self.comparts[:self.numComparts])) #sum(comparts[:numcomparts+1]) is total number of S chemicals
             )
             rate = np.sum(ckinetic_rates)
             which_action = np.random.choice(np.arange(5), p=ckinetic_rates/rate)
             delay = np.random.exponential(1/rate)
             timer += delay
+            if timer >= time_limit:
+                break
 
             if which_action == 0: # add compartment
                 self.add_compart(np.int32(np.random.randint(0, 11)))
             elif which_action == 1: # remove compartment
                 self.remove_compart(self.random_sample_index())
             elif which_action == 2: # split compartment
-                which_compart = np.random.choice(np.arange(self.numcomparts), p = self.comparts[:self.numcomparts]/np.sum(self.comparts[0:self.numcomparts]))
+                which_compart = np.random.choice(np.arange(self.numComparts), p = self.comparts[:self.numComparts]/np.sum(self.comparts[0:self.numComparts]))
                 #which_compart = self.random_sample_index() # maybe different name
                 amount = 0
                 if self.comparts[which_compart] != 0:
@@ -136,32 +138,32 @@ class SimpleFastCompartmentManager:
                 self.comparts[which_compart] -= amount
                 self.add_compart(amount)
             elif which_action == 3: # increment one compartment's chemicals
-                kinetic_rates = self.comparts[:self.numcomparts]
-                which_compart = np.random.choice(np.arange(self.numcomparts))
+                kinetic_rates = self.comparts[:self.numComparts]
+                which_compart = np.random.choice(np.arange(self.numComparts))
                 self.comparts[which_compart] += 1
             else: # decrement one compartment's chemicals
-                kinetic_rates = self.comparts[:self.numcomparts]
-                which_compart = np.random.choice(np.arange(self.numcomparts), p = kinetic_rates/np.sum(kinetic_rates))
+                kinetic_rates = self.comparts[:self.numComparts]
+                which_compart = np.random.choice(np.arange(self.numComparts), p = kinetic_rates/np.sum(kinetic_rates))
                 self.comparts[which_compart] -= 1
-        return self.comparts[:self.numcomparts]
+        return
     
     def add_compart(self, amount):
-        self.comparts[self.numcomparts] = amount
-        self.numcomparts += 1
+        self.comparts[self.numComparts] = amount
+        self.numComparts += 1
     
     def remove_compart(self, index):        
-        if index != self.numcomparts-1:
-            self.comparts[index] = self.comparts[self.numcomparts-1]            
-        self.numcomparts -= 1
+        if index != self.numComparts-1:
+            self.comparts[index] = self.comparts[self.numComparts-1]            
+        self.numComparts -= 1
 
     def random_sample_index(self):
-        return np.int32(np.random.randint(0, self.numcomparts))
+        return np.int32(np.random.randint(0, self.numComparts))
 
     def graph(self):
-        for i in range(self.n):
-            plt.plot(self.ctimes, self.populations[:, i])
-        plt.plot(self.ctimes, self.cpopulation)
-        plt.legend(['G','M','P','D','C']) # change later
+        
+        # plt.plot(self.population[:self.numReactions, 0], self.population[:self.numReactions, 1])
+        # plt.plot(self.population[:self.numReactions, 0], self.population[:self.numReactions, 2])
+        plt.legend(['numS','numC'])
         plt.show()
 
 class SimpleFastCompartmentManager1:
@@ -177,33 +179,40 @@ class SimpleFastCompartmentManager1:
         self.comparts[0] = 5
         self.comparts[1] = 3
         self.comparts[2] = 2
-        self.numcomparts = np.int32(3)
+        self.numComparts = np.int32(3)
         self.numS = np.int32(10)
         self.numzeros = np.int32(0)
     
     def simComparts(self, limit):
         timer = np.float64(0)
         time_limit = np.float64(limit)
-        # initial amount of compartments
-        self.numcomparts = np.int32(3)
-        o=0
-        while timer < time_limit:
+
+        self.population = np.zeros((10000, 3))
+        self.numComparts = np.int32(3)
+        self.numReactions = np.int32(0)
+        while True:
+            self.population[self.numReactions,0] = timer
+            self.population[self.numReactions,1] = self.numS
+            self.population[self.numReactions,2] = self.numComparts
+            # print(self.population[self.numReactions])
             ckinetic_rates = np.array(
-                (self.kI, self.numcomparts*self.kE, self.kF*self.numS,
-                self.numcomparts*self.kB, self.kD*self.numS) #sum(comparts[:numcomparts]) is total number of S chemicals
+                (self.kI, self.numComparts*self.kE, self.kF*self.numS,
+                self.numComparts*self.kB, self.kD*self.numS) #sum(comparts[:numcomparts]) is total number of S chemicals
             )
             rate = np.sum(ckinetic_rates)
             which_action = np.random.choice(np.arange(5), p=ckinetic_rates/rate)
             
             delay = np.random.exponential(1/rate)
             timer += delay
+            if timer >= time_limit:
+                break
 
             if which_action == 0: # add compartment
                 self.add_compart(np.int32(np.random.randint(0, 11)))
             elif which_action == 1: # remove compartment
                 self.remove_compart(self.random_sample_index())
             elif which_action == 2: # split compartment
-                which_compart = np.random.choice(np.arange(self.numcomparts), p = self.comparts[:self.numcomparts]/np.sum(self.comparts[0:self.numcomparts]))
+                which_compart = np.random.choice(np.arange(self.numComparts), p = self.comparts[:self.numComparts]/np.sum(self.comparts[0:self.numComparts]))
                 #which_compart = self.random_sample_index() # maybe different name
                 amount = 0
                 if self.comparts[which_compart] != 0:
@@ -212,39 +221,41 @@ class SimpleFastCompartmentManager1:
                 self.numS -= amount
                 self.add_compart(amount)
             elif which_action == 3: # increment one compartment's chemicals
-                kinetic_rates = self.comparts[:self.numcomparts]
-                which_compart = np.random.choice(np.arange(self.numcomparts))
+                kinetic_rates = self.comparts[:self.numComparts]
+                which_compart = np.random.choice(np.arange(self.numComparts))
                 self.comparts[which_compart] += 1
                 self.numS += 1
             else: # decrement one compartment's chemicals
-                kinetic_rates = self.comparts[:self.numcomparts]
-                which_compart = np.random.choice(np.arange(self.numcomparts), p = kinetic_rates/np.sum(kinetic_rates))
+                kinetic_rates = self.comparts[:self.numComparts]
+                which_compart = np.random.choice(np.arange(self.numComparts), p = kinetic_rates/np.sum(kinetic_rates))
                 self.comparts[which_compart] -= 1
                 self.numS -= 1
-                o+=1
+            self.numReactions += 1
         # print(ckinetic_rates, self.numS)
 
-        return self.comparts[:self.numcomparts],o
+        return self.comparts[:self.numComparts]
     
     def add_compart(self, amount):
-        self.comparts[self.numcomparts] = amount
-        self.numcomparts += 1
+        self.comparts[self.numComparts] = amount
+        self.numComparts += 1
         self.numS += amount
     
     def remove_compart(self, index):   
         self.numS -= self.comparts[index]     
-        if index != self.numcomparts-1:
-            self.comparts[index] = self.comparts[self.numcomparts-1]            
-        self.numcomparts -= 1
+        if index != self.numComparts-1:
+            self.comparts[index] = self.comparts[self.numComparts-1]            
+        self.numComparts -= 1
 
     def random_sample_index(self):
-        return np.int32(np.random.randint(0, self.numcomparts))
+        return np.int32(np.random.randint(0, self.numComparts))
 
     def graph(self):
-        for i in range(self.n):
-            plt.plot(self.ctimes, self.populations[:, i])
-        plt.plot(self.ctimes, self.cpopulation)
-        plt.legend(['G','M','P','D','C']) # change later
+        t = self.population[:self.numReactions, 0]
+        s = self.population[:self.numReactions, 1]
+        c = self.population[:self.numReactions, 2]
+        plt.plot(t, s)
+        plt.plot(t, c)
+        plt.legend(['numS','numC'])
         plt.show()
 
 class SimpleFastCompartmentManager2:
@@ -260,7 +271,7 @@ class SimpleFastCompartmentManager2:
         self.comparts[0] = 5
         self.comparts[1] = 3
         self.comparts[2] = 2
-        self.numcomparts = np.int32(3)
+        self.numComparts = np.int32(3)
         self.numS = np.int32(10)
         self.numzeros = np.int32(0)
     
@@ -269,25 +280,27 @@ class SimpleFastCompartmentManager2:
         time_limit = np.float64(limit)
         # initial amount of compartments
         o=0
-        while timer < time_limit:
+        while True:
             ckinetic_rates = np.array(
-                (self.kI, (self.numcomparts+self.numzeros)*self.kE, self.kF*self.numS,
-                (self.numcomparts+self.numzeros)*self.kB, self.kD*self.numS)
+                (self.kI, (self.numComparts+self.numzeros)*self.kE, self.kF*self.numS,
+                (self.numComparts+self.numzeros)*self.kB, self.kD*self.numS)
             )
             rate = np.sum(ckinetic_rates)
             which_action = np.random.choice(np.arange(5), p=ckinetic_rates/rate)
             delay = np.random.exponential(1/rate)
             timer += delay
+            if timer >= time_limit:
+                break
 
             if which_action == 0: # add compartment
                 self.add_compart(np.int32(np.random.randint(0, 11)))
 
             elif which_action == 1: # remove compartment
-                which_compart = np.int32(np.random.randint(0, self.numcomparts+self.numzeros))
+                which_compart = np.int32(np.random.randint(0, self.numComparts+self.numzeros))
                 self.remove_compart(which_compart)
 
             elif which_action == 2: # split compartment
-                which_compart = np.random.choice(np.arange(self.numcomparts), p = self.comparts[:self.numcomparts]/self.numS)
+                which_compart = np.random.choice(np.arange(self.numComparts), p = self.comparts[:self.numComparts]/self.numS)
                 amount = 0
                 if self.comparts[which_compart] != 0:
                     amount = np.int32(np.random.randint(0, self.comparts[which_compart]))
@@ -296,11 +309,11 @@ class SimpleFastCompartmentManager2:
                 self.add_compart(amount)
 
             elif which_action == 3: # increment one compartment's chemicals
-                kinetic_rates = self.comparts[:self.numcomparts]
-                which_compart = np.random.choice(np.arange(self.numcomparts+self.numzeros))
+                kinetic_rates = self.comparts[:self.numComparts]
+                which_compart = np.random.choice(np.arange(self.numComparts+self.numzeros))
                 
                 # selected empty compartment
-                if which_compart >= self.numcomparts:
+                if which_compart >= self.numComparts:
                     self.numzeros -= 1
                     self.add_compart(1)
                 
@@ -310,15 +323,15 @@ class SimpleFastCompartmentManager2:
                     self.numS += 1
 
             else: # decrement one compartment's chemicals
-                kinetic_rates = self.comparts[:self.numcomparts]
-                which_compart = np.random.choice(np.arange(self.numcomparts), p = kinetic_rates/np.sum(kinetic_rates))
+                kinetic_rates = self.comparts[:self.numComparts]
+                which_compart = np.random.choice(np.arange(self.numComparts), p = kinetic_rates/np.sum(kinetic_rates))
                 self.comparts[which_compart] -= 1
                 self.numS -= 1
                 if self.comparts[which_compart] == 0:
                     self.remove_compart(which_compart)
             o += 1
-        # print("here", self.comparts[:self.numcomparts], self.numS)
-        return self.comparts[:self.numcomparts], self.numzeros, o
+        # print("here", self.comparts[:self.numComparts], self.numS)
+        return self.comparts[:self.numComparts], self.numzeros, o
     
     def add_compart(self, amount):
         # add fake compartment
@@ -326,13 +339,13 @@ class SimpleFastCompartmentManager2:
             self.numzeros += 1
         # add real compartment
         else:
-            self.comparts[self.numcomparts] = amount
-            self.numcomparts += 1
+            self.comparts[self.numComparts] = amount
+            self.numComparts += 1
             self.numS += amount
     
     def remove_compart(self, index):      
         # remove zero
-        if index >= self.numcomparts:
+        if index >= self.numComparts:
             self.numzeros -= 1
             return
         
@@ -340,11 +353,11 @@ class SimpleFastCompartmentManager2:
         self.numS -= self.comparts[index]
         
         # replace compartment
-        if index < self.numcomparts-1:
-            self.comparts[index] = self.comparts[self.numcomparts-1]
+        if index < self.numComparts-1:
+            self.comparts[index] = self.comparts[self.numComparts-1]
 
         # remove compartment
-        self.numcomparts -= 1
+        self.numComparts -= 1
 
     def graph(self):
         for i in range(self.n):
