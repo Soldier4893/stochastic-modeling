@@ -4,7 +4,7 @@ import numpy as np
 import time
 
 def create_simulation(t):
-    sfcm = SimpleFastCompartmentManager((1.4, 0.3, 0.6, 0.1), 3, 0.2)
+    sfcm = SimpleFastCompartmentManager((1, 1, 3.1, 0), 1, 1)
     x = sfcm.simComparts(t)
     print(x)
 
@@ -22,7 +22,7 @@ threads = 8
 threads2 = 4
 
 if __name__ == "__main__":
-    create_simulation(0.2)
+    create_simulation(20)
     print('done')
     # test(threads, short, many)
     # test(threads2, short, many)

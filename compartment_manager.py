@@ -113,12 +113,12 @@ class SimpleFastCompartmentManager:
 
         while timer < time_limit:
             ckinetic_rates = np.array(
-                (self.kI, self.numcomparts*self.kE, self.numcomparts*self.kF*np.sum(self.comparts[0:self.numcomparts]),
-                self.numcomparts*(self.numcomparts-1)/2 * self.kC, self.numcomparts*self.kB,
-                self.kD*np.sum(self.comparts[:self.numcomparts+1])) #sum(comparts[:numcomparts+1]) is total number of S chemicals
+                (self.kI, self.numcomparts*self.kE, self.kF*np.sum(self.comparts[0:self.numcomparts]),
+                self.numcomparts*self.kB, self.kD*np.sum(self.comparts[:self.numcomparts])) #sum(comparts[:numcomparts+1]) is total number of S chemicals
             )
             rate = np.sum(ckinetic_rates)
-            which_action = np.random.choice(np.arange(6), p=ckinetic_rates/rate)
+            which_action = np.random.choice(np.arange(5), p=ckinetic_rates/rate)
+            # print(self.comparts[0:self.numcomparts])
             delay = np.random.exponential(1/rate)
             timer += delay
             # print(self.comparts[:self.numcomparts])
@@ -134,14 +134,8 @@ class SimpleFastCompartmentManager:
                 if self.comparts[which_compart] != 0:
                     amount = np.int32(np.random.randint(0, self.comparts[which_compart]))
                 self.comparts[which_compart] -= amount
-                self.add_compart(amount)                
-            elif which_action == 3: # merge compartments
-                giver = self.random_sample_index() # maybe different name
-                amount = self.comparts[giver]
-                self.remove_compart(giver)
-                receiver = self.random_sample_index()
-                self.comparts[receiver] += amount
-            elif which_action == 4: # increment one compartment's chemicals
+                self.add_compart(amount)
+            elif which_action == 3: # increment one compartment's chemicals
                 kinetic_rates = self.comparts[:self.numcomparts]
                 which_compart = np.random.choice(np.arange(self.numcomparts))
                 self.comparts[which_compart] += 1
