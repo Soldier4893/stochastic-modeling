@@ -5,24 +5,23 @@ import numpy as np
 import time
 import cProfile
 
-timelim = 2
+timelim = 20
+# np.random.seed(19)
 
-def create_simulation():
-    x = sfcm.simComparts(timelim)
-    # print()
-    return np.sum(x)
+# def create_simulation():
+#     x = sfcm.simComparts(timelim)
+#     # print()
+#     return np.sum(x)
 
 def create_simulation1():
-    y, o = sfcm1.simComparts(timelim)
+    c, s = sfcm1.simComparts(timelim)
     # print(z)
-    return o
-    # return np.sum(y), 
+    return c, s
 
 def create_simulation2():
-    z, t, o = sfcm2.simComparts(timelim)
+    c, s = sfcm2.simComparts(timelim)
     # print('help')
-    return o
-    # return np.sum(z) + t
+    return c, s
 
 
 def test(threads, duration, many):
@@ -40,43 +39,44 @@ threads2 = 4
 
 if __name__ == "__main__":
     # cProfile.run('create_simulation()')
-    sum = 0
-    sum1 = 0
-    sum2 = 0
-    timer = 0
+    sums = [0,0,0,0]
     timer1 = 0
     timer2 = 0
 
-    count = 1000
-    sfcm2 = SimpleFastCompartmentManager2((1, 1, 2.01, 0), 1, 1)
-    sfcm2.simComparts(100)
-    sfcm2.graph()
-
-    sfcm1 = SimpleFastCompartmentManager1((1, 1, 2.01, 0), 1, 1)
-    sfcm1.simComparts(100)
+    # count = 10
+    sfcm1 = SimpleFastCompartmentManager1((1, 1, 2, 0), 1, 1)
+    sfcm1.simComparts(2500)
     sfcm1.graph()
+    
+    # sfcm2 = SimpleFastCompartmentManager2((1, 1, 2.5, 0), 1, 1)
+    # sfcm2.simComparts(5)
+    # sfcm2.graph()
 
-    plt.legend(['1 numS','1 numC', '2 numS','2 numC'])
-    plt.show()
+    # plt.legend(['1 numS','1 numC','2 numS','2 numC'])
+    # plt.show()
+    count = 50
     # for _ in range(count):
-    #     sfcm2 = SimpleFastCompartmentManager2((1, 1, 2, 0), 1, 1)
-    #     sfcm = SimpleFastCompartmentManager((1, 1, 2, 0), 1, 1)
+    #     # sfcm2 = SimpleFastCompartmentManager2((1, 1, 1.5, 0), 1, 1)
+    #     # sfcm = SimpleFastCompartmentManager((1, 1, 2, 0), 1, 1)
     #     sfcm1 = SimpleFastCompartmentManager1((1, 1, 2, 0), 1, 1)
 
     #     s = time.time()
-    #     sum += create_simulation()
-    #     timer +=time.time()-s
-
-    #     s = time.time()
-    #     sum1 += create_simulation1()
+    #     a, b = create_simulation1()
+    #     sums[0] += a
+    #     sums[1] += b
     #     timer1 +=time.time()-s
         
-    #     s = time.time()
-    #     sum2+=create_simulation2()
-    #     timer2 +=time.time()-s
+    #     # s = time.time()
+    #     # a, b = create_simulation2()
+    #     # sums[2] += a
+    #     # sums[3] += b
+    #     # timer2 +=time.time()-s
 
-    # print(timer/count, timer1/count, timer2/count)
-    # print(sum, sum1, sum2)
+    # print(timer1/count, timer2/count)
+    # print("1c", sums[0]/count)
+    # print("1s", sums[1]/count)
+    # print("2c", sums[2]/count)
+    # print("2s", sums[3]/count)
 
 
 

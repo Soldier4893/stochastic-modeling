@@ -191,11 +191,17 @@ class SimpleFastCompartmentManager1:
         self.numComparts = np.int32(3)
         self.numReactions = np.int32(0)
         while True:
-            # if self.numReactions % 2 ==0:
-            self.population[self.numReactions,0] = timer
-            self.population[self.numReactions,1] = self.numS
-            self.population[self.numReactions,2] = self.numComparts
-            # print(self.population[self.numReactions])
+            
+            # self.population[self.numReactions,0] = timer
+            # self.population[self.numReactions,1] = self.numS
+            # self.population[self.numReactions,2] = self.numComparts
+            
+            
+            if self.numReactions % 100 ==0:
+                p = int(self.numReactions/100)
+                self.population[p,0] = timer
+                self.population[p,1] = self.numS
+                self.population[p,2] = self.numComparts
             ckinetic_rates = np.array(
                 (self.kI, self.kE*self.numComparts, self.kF*self.numS,
                 self.kB*self.numComparts, self.kD*self.numS)
@@ -232,6 +238,8 @@ class SimpleFastCompartmentManager1:
                 self.comparts[which_compart] -= 1
                 self.numS -= 1
             self.numReactions += 1
+            if self.numReactions == 10000000:
+                break
         # print(ckinetic_rates, self.numS)
 
         return self.numComparts, self.numS
@@ -251,9 +259,14 @@ class SimpleFastCompartmentManager1:
         return np.int32(np.random.randint(0, self.numComparts))
 
     def graph(self):
-        t = self.population[:self.numReactions, 0]
-        s = self.population[:self.numReactions, 1]
-        c = self.population[:self.numReactions, 2]
+        p = int(self.numReactions/100)
+        t = self.population[:p, 0]
+        s = self.population[:p, 1]
+        c = self.population[:p, 2]
+        # t = self.population[:self.numReactions, 0]
+        # s = self.population[:self.numReactions, 1]
+        # c = self.population[:self.numReactions, 2]
+        print(self.numReactions)
         plt.plot(t, s)
         plt.plot(t, c)
         plt.legend(['numS','numC'])
