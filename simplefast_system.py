@@ -37,40 +37,29 @@ few = 40
 threads = 8
 threads2 = 4
 
+def numReaction_vs_time_logfit(count, gap):
+    outs = np.zeros(count)
+    for i in range(1, count+1):
+        sfcm1 = SimpleFastCompartmentManager1((1, 1, 2.1, 0), 1, 1)
+        x,y,z =sfcm1.simComparts(i*gap)
+        outs[i-1] = z
+    A = np.ones((2, count))
+    A[1] = np.log(gap*np.arange(1, count+1))
+    A = A.T
+    b = np.log(np.array(outs))
+    x = np.linalg.solve(np.dot(A.T, A), np.dot(A.T, b))
+    print(x)
+    plt.plot(np.log(gap*np.arange(1, count+1)), np.log(np.array(outs)))
+    plt.show()
+    return x # K, p
+
+
 if __name__ == "__main__":
     # cProfile.run('create_simulation()')
-    sums = [0,0,0,0]
-    timer1 = 0
-    timer2 = 0
-
-    # count = 10
-    sfcm1 = SimpleFastCompartmentManager1((1, 1, 2, 0), 1, 1)
-    sfcm1.simComparts(2500)
-    sfcm1.graph()
+    k, p = numReaction_vs_time_logfit(5, 30)
     
-    # sfcm2 = SimpleFastCompartmentManager2((1, 1, 2.5, 0), 1, 1)
-    # sfcm2.simComparts(5)
-    # sfcm2.graph()
 
-    # plt.legend(['1 numS','1 numC','2 numS','2 numC'])
-    # plt.show()
-    count = 50
-    # for _ in range(count):
-    #     # sfcm2 = SimpleFastCompartmentManager2((1, 1, 1.5, 0), 1, 1)
-    #     # sfcm = SimpleFastCompartmentManager((1, 1, 2, 0), 1, 1)
-    #     sfcm1 = SimpleFastCompartmentManager1((1, 1, 2, 0), 1, 1)
-
-    #     s = time.time()
-    #     a, b = create_simulation1()
-    #     sums[0] += a
-    #     sums[1] += b
-    #     timer1 +=time.time()-s
-        
-    #     # s = time.time()
-    #     # a, b = create_simulation2()
-    #     # sums[2] += a
-    #     # sums[3] += b
-    #     # timer2 +=time.time()-s
+    
 
     # print(timer1/count, timer2/count)
     # print("1c", sums[0]/count)

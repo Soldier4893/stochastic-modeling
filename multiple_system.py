@@ -13,7 +13,7 @@ import numpy as np
 reactions = [("0", "S", 1), ("S", "0", 1)]
 species = ['S', 'B']
 X = np.array([10, 9], dtype = np.int32)
-ctime_steps = 2000
+ctime_steps = 1500
 
 def sample_pmf_X():
     # temporary distribution

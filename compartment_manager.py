@@ -189,19 +189,25 @@ class SimpleFastCompartmentManager1:
 
         self.population = np.zeros((10000000, 3))
         self.numComparts = np.int32(3)
-        self.numReactions = np.int32(0)
+        self.numReactions = np.int32(-1)
+        counter = 0
+        p = 0
         while True:
+            self.numReactions += 1
+            self.population[self.numReactions,0] = timer
+            self.population[self.numReactions,1] = self.numS
+            self.population[self.numReactions,2] = self.numComparts
             
-            # self.population[self.numReactions,0] = timer
-            # self.population[self.numReactions,1] = self.numS
-            # self.population[self.numReactions,2] = self.numComparts
-            
-            
-            if self.numReactions % 100 ==0:
-                p = int(self.numReactions/100)
-                self.population[p,0] = timer
-                self.population[p,1] = self.numS
-                self.population[p,2] = self.numComparts
+            # counter += 1
+            # if counter == 100:
+            #     self.numReactions += 1
+            #     self.population[self.numReactions,0] = timer
+            #     self.population[self.numReactions,1] = self.numS
+            #     self.population[self.numReactions,2] = self.numComparts
+            #     counter = 0
+            #     p += 1
+            #     if p == 100:
+            #         p = 0
             ckinetic_rates = np.array(
                 (self.kI, self.kE*self.numComparts, self.kF*self.numS,
                 self.kB*self.numComparts, self.kD*self.numS)
@@ -237,12 +243,11 @@ class SimpleFastCompartmentManager1:
                 which_compart = np.random.choice(np.arange(self.numComparts), p = kinetic_rates/np.sum(kinetic_rates))
                 self.comparts[which_compart] -= 1
                 self.numS -= 1
-            self.numReactions += 1
             if self.numReactions == 10000000:
                 break
         # print(ckinetic_rates, self.numS)
 
-        return self.numComparts, self.numS
+        return self.numComparts, self.numS, self.numReactions
     
     def add_compart(self, amount):
         self.comparts[self.numComparts] = amount
@@ -259,17 +264,14 @@ class SimpleFastCompartmentManager1:
         return np.int32(np.random.randint(0, self.numComparts))
 
     def graph(self):
-        p = int(self.numReactions/100)
-        t = self.population[:p, 0]
-        s = self.population[:p, 1]
-        c = self.population[:p, 2]
-        # t = self.population[:self.numReactions, 0]
-        # s = self.population[:self.numReactions, 1]
-        # c = self.population[:self.numReactions, 2]
+        t = self.population[:self.numReactions, 0]
+        s = self.population[:self.numReactions, 1]
+        c = self.population[:self.numReactions, 2]
         print(self.numReactions)
         plt.plot(t, s)
         plt.plot(t, c)
         plt.legend(['numS','numC'])
+        # plt.savefig('/foo.png', bbox_inches='tight')
         plt.show()
 
 class SimpleFastCompartmentManager2:
