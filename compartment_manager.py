@@ -138,7 +138,6 @@ class SimpleFastCompartmentManager:
                 self.comparts[which_compart] -= amount
                 self.add_compart(amount)
             elif which_action == 3: # increment one compartment's chemicals
-                kinetic_rates = self.comparts[:self.numComparts]
                 which_compart = np.random.choice(np.arange(self.numComparts))
                 self.comparts[which_compart] += 1
             else: # decrement one compartment's chemicals

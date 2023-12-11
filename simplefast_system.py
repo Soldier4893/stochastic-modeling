@@ -56,7 +56,7 @@ def numReaction_vs_time_logfit(count, gap):
 
 if __name__ == "__main__":
     # cProfile.run('create_simulation()')
-    k, p = numReaction_vs_time_logfit(5, 30)
+    # k, p = numReaction_vs_time_logfit(5, 30)
     
 
     
